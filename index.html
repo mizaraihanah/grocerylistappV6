@@ -1,0 +1,2279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Grocery List</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --soft-orange: #FFB366;
+            --soft-yellow: #FFF2B2;
+            --soft-green: #B8E6B8;
+            --soft-pink: #FFB3D1;
+            --light-orange: #FFF0E6;
+            --light-yellow: #FFFDF0;
+            --light-green: #F0FFF0;
+            --light-pink: #FFF0F5;
+        }
+
+        body {
+            background: linear-gradient(135deg, var(--light-yellow) 0%, var(--light-green) 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .navbar {
+            background: linear-gradient(90deg, var(--soft-orange) 0%, var(--soft-pink) 100%);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+
+        .btn-add {
+            background: linear-gradient(45deg, var(--soft-green) 0%, var(--soft-yellow) 100%);
+            border: none;
+            border-radius: 25px;
+            padding: 10px 25px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-add:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .form-control {
+            border-radius: 10px;
+            border: 2px solid transparent;
+            background-color: rgba(255, 255, 255, 0.9);
+        }
+
+        .form-control:focus {
+            border-color: var(--soft-orange);
+            box-shadow: 0 0 0 0.2rem rgba(255, 179, 102, 0.25);
+        }
+
+        .category-badge {
+            border-radius: 15px;
+            font-weight: 500;
+        }
+
+        .category-fruits { background-color: var(--soft-pink); color: #333; }
+        .category-vegetables { background-color: var(--soft-green); color: #333; }
+        .category-dairy { background-color: var(--soft-yellow); color: #333; }
+        .category-meat { background-color: var(--soft-orange); color: #333; }
+        .category-pantry { background-color: #E6E6FA; color: #333; }
+        .category-beverages { background-color: #E0F2FF; color: #333; }
+        .category-snacks { background-color: #FFE4E1; color: #333; }
+        .category-frozen { background-color: #E6F3FF; color: #333; }
+        .category-household { background-color: #F0F8F0; color: #333; }
+
+        .item-card {
+            border-left: 5px solid var(--soft-green);
+            background: rgba(255, 255, 255, 0.95);
+        }
+
+        .item-card.completed {
+            opacity: 0.7;
+            border-left-color: #28a745;
+        }
+
+        .item-card.completed .item-name {
+            text-decoration: line-through;
+            color: #6c757d;
+        }
+
+        .priority-high { border-left-color: var(--soft-pink) !important; }
+        .priority-medium { border-left-color: var(--soft-yellow) !important; }
+        .priority-low { border-left-color: var(--soft-green) !important; }
+
+        .expiry-status {
+            font-size: 0.8rem;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .expiry-fresh {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .expiry-warning {
+            background-color: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+
+        .expiry-expired {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .expiry-unknown {
+            background-color: #e2e3e5;
+            color: #6c757d;
+            border: 1px solid #ced4da;
+        }
+
+        .priority-indicator {
+            font-size: 0.8rem;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-weight: 500;
+        }
+
+        .priority-indicator.priority-high {
+            background-color: var(--soft-pink);
+            color: #721c24;
+        }
+
+        .priority-indicator.priority-medium {
+            background-color: var(--soft-yellow);
+            color: #856404;
+        }
+
+        .priority-indicator.priority-low {
+            background-color: var(--soft-green);
+            color: #155724;
+        }
+
+        .expiry-date-section {
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            padding: 8px;
+            margin-top: 8px;
+        }
+
+        .expiry-calculator {
+            font-size: 0.85rem;
+            color: #6c757d;
+            margin-top: 4px;
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .modal-content {
+            border-radius: 15px;
+            border: none;
+        }
+
+        .modal-header {
+            background: linear-gradient(90deg, var(--soft-orange) 0%, var(--soft-pink) 100%);
+            border-radius: 15px 15px 0 0;
+        }
+
+        .date-input-group {
+            position: relative;
+        }
+
+        .auto-calc-hint {
+            font-size: 0.75rem;
+            color: #6c757d;
+            font-style: italic;
+        }
+
+        .reminder-alert {
+            background: linear-gradient(90deg, var(--light-orange) 0%, var(--light-pink) 100%);
+            border: 1px solid var(--soft-orange);
+            border-radius: 10px;
+        }
+
+        .reminder-badge {
+            font-size: 0.7rem;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        .add-item-success {
+            animation: successPulse 0.6s ease-out;
+        }
+
+        @keyframes successPulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); background-color: rgba(40, 167, 69, 0.1); }
+            100% { transform: scale(1); }
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="#">
+                <i class="fas fa-shopping-cart me-2"></i>
+                Smart Grocery List
+            </a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="#" onclick="console.log('Current items:', groceryApp.items); groceryApp.showExpiryReport();">
+                    <i class="fas fa-clock me-1"></i>Expiry Report
+                </a>
+                <a class="nav-link" href="#" onclick="groceryApp.showRemindersManager();">
+                    <i class="fas fa-bell me-1"></i>Manage Reminders
+                </a>
+                <a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#statsModal">
+                    <i class="fas fa-chart-bar me-1"></i>Stats
+                </a>
+                <a class="nav-link" href="#" onclick="console.log('Debug Info:', {items: groceryApp.items, expiryTracker: groceryApp.expiryTracker});">
+                    <i class="fas fa-bug me-1"></i>Debug
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container mt-4">
+        <!-- Alert for reminders -->
+        <div id="reminderAlert" class="alert reminder-alert alert-dismissible fade show d-none" role="alert">
+            <i class="fas fa-bell me-2"></i>
+            <span id="reminderText"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+
+        <!-- Add Item Form -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card" id="addItemCard">
+                    <div class="card-body">
+                        <h5 class="card-title mb-3">
+                            <i class="fas fa-plus-circle me-2 text-success"></i>
+                            Add New Item
+                        </h5>
+                        <form id="addItemForm">
+                            <div class="row g-3">
+                                <div class="col-md-3">
+                                    <label for="itemName" class="form-label">Item Name</label>
+                                    <input type="text" class="form-control" id="itemName" required>
+                                </div>
+                                <div class="col-md-2">
+                                    <label for="quantity" class="form-label">Quantity</label>
+                                    <input type="number" class="form-control" id="quantity" min="1" value="1" required>
+                                </div>
+                                <div class="col-md-2">
+                                    <label for="category" class="form-label">Category</label>
+                                    <select class="form-control" id="category" required onchange="updateExpiryCalculation()">
+                                        <option value="">Select...</option>
+                                        <option value="fruits">Fruits</option>
+                                        <option value="vegetables">Vegetables</option>
+                                        <option value="dairy">Dairy</option>
+                                        <option value="meat">Meat</option>
+                                        <option value="pantry">Pantry</option>
+                                        <option value="beverages">Beverages</option>
+                                        <option value="snacks">Snacks</option>
+                                        <option value="frozen">Frozen</option>
+                                        <option value="household">Household</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-2">
+                                    <label for="priority" class="form-label">Priority</label>
+                                    <select class="form-control" id="priority" required>
+                                        <option value="low">Low</option>
+                                        <option value="medium" selected>Medium</option>
+                                        <option value="high">High</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-2">
+                                    <label for="estimatedPrice" class="form-label">Est. Price</label>
+                                    <input type="number" class="form-control" id="estimatedPrice" step="0.01" min="0">
+                                </div>
+                                <div class="col-md-1 d-flex align-items-end">
+                                    <button type="submit" class="btn btn-add w-100" id="addBtn">
+                                        <i class="fas fa-plus"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="row mt-3">
+                                <div class="col-md-6">
+                                    <label for="notes" class="form-label">Notes (Optional)</label>
+                                    <input type="text" class="form-control" id="notes" placeholder="Additional notes...">
+                                </div>
+                                <div class="col-md-3">
+                                    <label for="expiryDate" class="form-label">Expiry Date</label>
+                                    <div class="date-input-group">
+                                        <input type="date" class="form-control" id="expiryDate" onchange="updateExpiryCalculation()">
+                                        <div class="auto-calc-hint" id="autoCalcHint">
+                                            Auto-calculated based on category
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <label for="purchaseDate" class="form-label">Purchase Date</label>
+                                    <input type="date" class="form-control" id="purchaseDate" onchange="updateExpiryCalculation()">
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filter and Search -->
+        <div class="row mb-4">
+            <div class="col-md-4">
+                <input type="text" class="form-control" id="searchItems" placeholder="🔍 Search items...">
+            </div>
+            <div class="col-md-2">
+                <select class="form-control" id="filterCategory">
+                    <option value="">All Categories</option>
+                    <option value="fruits">Fruits</option>
+                    <option value="vegetables">Vegetables</option>
+                    <option value="dairy">Dairy</option>
+                    <option value="meat">Meat</option>
+                    <option value="pantry">Pantry</option>
+                    <option value="beverages">Beverages</option>
+                    <option value="snacks">Snacks</option>
+                    <option value="frozen">Frozen</option>
+                    <option value="household">Household</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <select class="form-control" id="filterPriority">
+                    <option value="">All Priorities</option>
+                    <option value="high">High Priority</option>
+                    <option value="medium">Medium Priority</option>
+                    <option value="low">Low Priority</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <select class="form-control" id="filterExpiry">
+                    <option value="">All Items</option>
+                    <option value="expired">Expired</option>
+                    <option value="expiring">Expiring Soon</option>
+                    <option value="fresh">Fresh Items</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button class="btn btn-outline-warning w-100" onclick="showExpiryReport()">
+                    <i class="fas fa-exclamation-triangle me-1"></i>Expiry Check
+                </button>
+            </div>
+        </div>
+
+        <!-- Shopping List -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header bg-transparent">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">
+                                <i class="fas fa-list me-2"></i>
+                                Shopping List
+                            </h5>
+                            <div>
+                                <button class="btn btn-sm btn-outline-secondary me-2" onclick="toggleView()">
+                                    <i class="fas fa-th-list" id="viewToggleIcon"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-danger" onclick="clearCompleted()">
+                                    <i class="fas fa-trash me-1"></i>Clear Completed
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div id="itemsList">
+                            <!-- Items will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Item Modal -->
+    <div class="modal fade" id="editModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header text-white">
+                    <h5 class="modal-title">
+                        <i class="fas fa-edit me-2"></i>
+                        Edit Item
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editItemForm">
+                        <input type="hidden" id="editItemId">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="editItemName" class="form-label">Item Name</label>
+                                <input type="text" class="form-control" id="editItemName" required>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="editQuantity" class="form-label">Quantity</label>
+                                <input type="number" class="form-control" id="editQuantity" min="1" required>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="editCategory" class="form-label">Category</label>
+                                <select class="form-control" id="editCategory" required>
+                                    <option value="fruits">Fruits</option>
+                                    <option value="vegetables">Vegetables</option>
+                                    <option value="dairy">Dairy</option>
+                                    <option value="meat">Meat</option>
+                                    <option value="pantry">Pantry</option>
+                                    <option value="beverages">Beverages</option>
+                                    <option value="snacks">Snacks</option>
+                                    <option value="frozen">Frozen</option>
+                                    <option value="household">Household</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="editPriority" class="form-label">Priority</label>
+                                <select class="form-control" id="editPriority" required>
+                                    <option value="low">Low</option>
+                                    <option value="medium">Medium</option>
+                                    <option value="high">High</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="editEstimatedPrice" class="form-label">Est. Price (per unit)</label>
+                                <input type="number" class="form-control" id="editEstimatedPrice" step="0.01" min="0">
+                            </div>
+                            <div class="col-md-4">
+                                <label for="editExpiryDate" class="form-label">Expiry Date</label>
+                                <input type="date" class="form-control" id="editExpiryDate">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="editPurchaseDate" class="form-label">Purchase Date</label>
+                                <input type="date" class="form-control" id="editPurchaseDate">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="editNotes" class="form-label">Notes</label>
+                                <input type="text" class="form-control" id="editNotes">
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="updateItem()">Save Changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Manage Reminders Modal -->
+    <div class="modal fade" id="remindersManagerModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-info text-white">
+                    <h5 class="modal-title">
+                        <i class="fas fa-bell me-2"></i>
+                        Manage Reminders
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="remindersManagerContent">
+                    <!-- Reminders will be loaded here -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Set Reminder Modal -->
+    <div class="modal fade" id="reminderModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header text-white">
+                    <h5 class="modal-title">
+                        <i class="fas fa-bell me-2"></i>
+                        Set Reminder
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="reminderForm">
+                        <input type="hidden" id="reminderItemId">
+                        <div class="mb-3">
+                            <label for="reminderItemDisplay" class="form-label">Item</label>
+                            <input type="text" class="form-control" id="reminderItemDisplay" readonly>
+                        </div>
+                        <div class="mb-3">
+                            <label for="reminderType" class="form-label">Reminder Type</label>
+                            <select class="form-control" id="reminderType" required>
+                                <option value="purchase_reminder">Purchase Reminder</option>
+                                <option value="expiry_warning">Expiry Warning</option>
+                                <option value="shopping_list">Shopping List Reminder</option>
+                                <option value="custom">Custom Reminder</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="reminderDate" class="form-label">Reminder Date & Time</label>
+                            <input type="datetime-local" class="form-control" id="reminderDate" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="reminderMessage" class="form-label">Custom Message (Optional)</label>
+                            <textarea class="form-control" id="reminderMessage" rows="3" placeholder="Enter custom reminder message..."></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label for="reminderPriority" class="form-label">Priority</label>
+                            <select class="form-control" id="reminderPriority" required>
+                                <option value="low">Low</option>
+                                <option value="medium" selected>Medium</option>
+                                <option value="high">High</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Notification Methods</label>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="notifyBrowser" checked>
+                                <label class="form-check-label" for="notifyBrowser">
+                                    Browser Notification
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="notifyInApp" checked>
+                                <label class="form-check-label" for="notifyInApp">
+                                    In-App Notification
+                                </label>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="createReminder()">Set Reminder</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Expiry Report Modal -->
+    <div class="modal fade" id="expiryModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-warning text-dark">
+                    <h5 class="modal-title">
+                        <i class="fas fa-clock me-2"></i>
+                        Expiry Report
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="expiryReportContent">
+                    <!-- Expiry report will be loaded here -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-danger" onclick="clearActiveExpiredItems()">
+                        Clear Active Expired Items
+                    </button>
+                    <button type="button" class="btn btn-outline-warning" onclick="clearCompletedExpiredItems()">
+                        Clear Completed Expired Items
+                    </button>
+                    <button type="button" class="btn btn-danger" onclick="clearAllExpiredItems()">
+                        Clear All Expired Items
+                    </button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Modal -->
+    <div class="modal fade" id="statsModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header text-white">
+                    <h5 class="modal-title">
+                        <i class="fas fa-chart-bar me-2"></i>
+                        Shopping Statistics
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-6">
+                            <div class="card text-center p-3">
+                                <h3 class="text-primary" id="totalItems">0</h3>
+                                <small class="text-muted">Total Items</small>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="card text-center p-3">
+                                <h3 class="text-success" id="completedItems">0</h3>
+                                <small class="text-muted">Completed</small>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="card text-center p-3">
+                                <h3 class="text-warning" id="pendingItems">0</h3>
+                                <small class="text-muted">Pending</small>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="card text-center p-3">
+                                <h3 class="text-info" id="totalEstimated">$0</h3>
+                                <small class="text-muted">Est. Total</small>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="card text-center p-3">
+                                <h3 class="text-danger" id="expiredCount">0</h3>
+                                <small class="text-muted">Expired</small>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="card text-center p-3">
+                                <h3 class="text-warning" id="expiringSoonCount">0</h3>
+                                <small class="text-muted">Expiring Soon</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Component: ExpiryTracker (reused from spoiltracker) -->
+    <script>
+        /**
+         * ExpiryTracker Component
+         * Reused and adapted from spoiltracker repository
+         * Original: https://github.com/psibir/spoiltracker
+         */
+        class ExpiryTracker {
+            constructor() {
+                // Shelf life data adapted from spoiltracker's database
+                this.shelfLifeData = {
+                    'fruits': 7, 'vegetables': 7, 'dairy': 7, 'meat': 3, 'pantry': 30,
+                    'beverages': 14, 'snacks': 30, 'frozen': 90, 'household': 365
+                };
+                this.expiryThreshold = 3;
+            }
+
+            // Adapted from spoiltracker's calculate_expiration_date method
+            calculateExpirationDate(purchaseDate, shelfLife) {
+                const expirationDate = new Date(purchaseDate);
+                expirationDate.setDate(expirationDate.getDate() + shelfLife);
+                return expirationDate;
+            }
+
+            // Get shelf life from database or defaults
+            getShelfLife(category) {
+                return this.shelfLifeData[category] || 7;
+            }
+
+            // Adapted from spoiltracker's date calculation logic
+            calculateDaysUntilExpiry(expirationDate) {
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                const expiry = new Date(expirationDate);
+                expiry.setHours(0, 0, 0, 0);
+                const timeDiff = expiry.getTime() - today.getTime();
+                return Math.ceil(timeDiff / (1000 * 3600 * 24));
+            }
+
+            // Enhanced expiry status for UI display
+            getExpiryStatus(item) {
+                if (!item.expiration_date || item.expiration_date === null || item.expiration_date === '') {
+                    return {
+                        status: 'no_date',
+                        badgeClass: 'expiry-unknown',
+                        message: 'No expiry date',
+                        daysUntilExpiry: null,
+                        icon: '<i class="fas fa-question-circle"></i>'
+                    };
+                }
+
+                const daysUntilExpiry = this.calculateDaysUntilExpiry(item.expiration_date);
+                
+                let status, badgeClass, message, icon;
+                
+                if (daysUntilExpiry < 0) {
+                    status = 'expired';
+                    badgeClass = 'expiry-expired';
+                    message = `Expired ${Math.abs(daysUntilExpiry)} day(s) ago`;
+                    icon = '<i class="fas fa-times-circle"></i>';
+                } else if (daysUntilExpiry <= this.expiryThreshold) {
+                    status = 'expiring_soon';
+                    badgeClass = 'expiry-warning';
+                    message = daysUntilExpiry === 0 ? 'Expires today' : `Expires in ${daysUntilExpiry} day(s)`;
+                    icon = '<i class="fas fa-exclamation-triangle"></i>';
+                } else {
+                    status = 'fresh';
+                    badgeClass = 'expiry-fresh';
+                    message = `${daysUntilExpiry} days left`;
+                    icon = '<i class="fas fa-check-circle"></i>';
+                }
+                
+                return { status, badgeClass, message, daysUntilExpiry, icon };
+            }
+
+            // Adapted from spoiltracker's generate_expiry_report method - FIXED VERSION
+            generateExpiryReport(items) {
+                console.log('Processing items for expiry report:', items);
+                
+                // Process all items, including completed ones for consistency
+                const expired = [];
+                const expiringSoon = [];
+                const fresh = [];
+                const noDate = [];
+                const completed = [];
+                
+                items.forEach(item => {
+                    // Separate completed items but still process them for expiry status
+                    if (item.completed) {
+                        completed.push(item);
+                        return;
+                    }
+                    
+                    if (!item.expiration_date) {
+                        noDate.push(item);
+                        return;
+                    }
+                    
+                    const days = this.calculateDaysUntilExpiry(item.expiration_date);
+                    console.log(`Item ${item.name}: ${days} days until expiry`);
+                    
+                    if (days < 0) {
+                        expired.push(item);
+                    } else if (days <= this.expiryThreshold) {
+                        expiringSoon.push(item);
+                    } else {
+                        fresh.push(item);
+                    }
+                });
+
+                // Calculate total including completed items for consistency with stats
+let totalExpired = expired.length;
+let totalExpiringSoon = expiringSoon.length;
+
+// Also count expiry status of completed items for summary totals
+completed.forEach(item => {
+    if (item.expiration_date) {
+        const days = this.calculateDaysUntilExpiry(item.expiration_date);
+        if (days < 0) {
+            totalExpired++;
+        } else if (days <= this.expiryThreshold) {
+            totalExpiringSoon++;
+        }
+    }
+});
+
+                // Calculate total including completed items for consistency with stats
+                const report = {
+    expired, 
+    expiring_soon: expiringSoon, 
+    fresh,
+    no_date: noDate,
+    completed,
+    expired_count: totalExpired,           // Now includes completed expired items
+    expiring_soon_count: totalExpiringSoon, // Now includes completed expiring items
+    fresh_count: fresh.length,
+    no_date_count: noDate.length,
+    completed_count: completed.length,
+    active_items: expired.length + expiringSoon.length + fresh.length + noDate.length,
+    total_items: expired.length + expiringSoon.length + fresh.length + noDate.length + completed.length
+};
+                
+                console.log('Final report:', report);
+                return report;
+            }
+        }
+    </script>
+
+    <!-- Component: ReminderSystem (reused from customer-reminder-php) -->
+    <script>
+        /**
+         * ReminderSystem Component
+         * Reused and adapted from customer-reminder-php repository
+         * Original: https://github.com/atchopba/customer-reminder-php
+         */
+        class ReminderSystem {
+            constructor(expiryTracker) {
+                this.expiryTracker = expiryTracker;
+                this.reminders = [];
+                this.reminderTypes = {
+                    EXPIRY_WARNING: 'expiry_warning',
+                    EXPIRED: 'expired', 
+                    PURCHASE_REMINDER: 'purchase_reminder',
+                    SHOPPING_LIST: 'shopping_list'
+                };
+                this.notificationPermission = false;
+                this.init();
+            }
+
+            async init() {
+                await this.requestNotificationPermission();
+                this.startReminderEngine();
+            }
+
+            // Browser notification permission
+            async requestNotificationPermission() {
+                if ('Notification' in window) {
+                    const permission = await Notification.requestPermission();
+                    this.notificationPermission = permission === 'granted';
+                }
+            }
+
+            // Adapted from customer-reminder-php's reminder creation logic
+            createReminder(item, type, reminderDate, options = {}) {
+                const reminder = {
+                    id: this.generateReminderId(),
+                    item_id: item.id,
+                    item_name: item.name,
+                    item_category: item.category,
+                    type: type,
+                    reminder_date: reminderDate,
+                    created_date: new Date(),
+                    is_active: true,
+                    is_sent: false,
+                    priority: this.getReminderPriority(type, item),
+                    message: this.generateReminderMessage(item, type),
+                    notification_methods: options.notification_methods || ['in_app', 'browser']
+                };
+
+                this.reminders.push(reminder);
+                return reminder;
+            }
+
+            generateReminderId() {
+                return Date.now().toString(36) + Math.random().toString(36).substr(2, 9);
+            }
+
+            // Adapted priority system from customer-reminder-php
+            getReminderPriority(type, item) {
+                if (type === this.reminderTypes.EXPIRED || item.priority === 'high') {
+                    return 'high';
+                }
+                if (type === this.reminderTypes.EXPIRY_WARNING) {
+                    return 'medium';
+                }
+                return 'low';
+            }
+
+            // Message generation adapted from customer-reminder-php
+            generateReminderMessage(item, type) {
+                const messages = {
+                    [this.reminderTypes.EXPIRY_WARNING]: `⚠️ ${item.name} expires soon!`,
+                    [this.reminderTypes.EXPIRED]: `🚨 ${item.name} has expired!`,
+                    [this.reminderTypes.PURCHASE_REMINDER]: `🛒 Don't forget to buy ${item.name}!`,
+                    [this.reminderTypes.SHOPPING_LIST]: `📝 ${item.name} is on your shopping list.`
+                };
+                return messages[type] || `Reminder about ${item.name}`;
+            }
+
+            // Setup automatic expiry reminders
+            setupExpiryReminders(groceryItems) {
+                groceryItems.forEach(item => {
+                    if (!item.expiration_date || item.completed) return;
+
+                    const daysUntilExpiry = this.expiryTracker.calculateDaysUntilExpiry(item.expiration_date);
+                    
+                    if (daysUntilExpiry <= 3 && daysUntilExpiry > 0) {
+                        this.createReminder(item, this.reminderTypes.EXPIRY_WARNING, new Date());
+                    }
+                    
+                    if (daysUntilExpiry < 0) {
+                        this.createReminder(item, this.reminderTypes.EXPIRED, new Date());
+                    }
+                });
+            }
+
+            // Adapted from customer-reminder-php's reminder processing
+            /**
+             * Get pending reminders that should be triggered
+             */
+            getPendingReminders() {
+                const now = new Date();
+                return this.reminders.filter(reminder => 
+                    reminder.is_active && 
+                    !reminder.is_sent && 
+                    new Date(reminder.reminder_date) <= now
+                );
+            }
+
+            /**
+             * Get all active reminders
+             */
+            getActiveReminders() {
+                return this.reminders.filter(r => r.is_active);
+            }
+
+            /**
+             * Deactivate a specific reminder
+             */
+            deactivateReminder(reminderId) {
+                const reminder = this.reminders.find(r => r.id === reminderId);
+                if (reminder) {
+                    reminder.is_active = false;
+                    reminder.deactivated_date = new Date();
+                    return true;
+                }
+                return false;
+            }
+
+            /**
+             * Deactivate reminders for completed items
+             */
+            deactivateItemReminders(itemId) {
+                this.reminders.forEach(reminder => {
+                    if (reminder.item_id === itemId && reminder.is_active) {
+                        reminder.is_active = false;
+                        reminder.deactivated_date = new Date();
+                    }
+                });
+            }
+
+            /**
+             * Get reminders for specific item
+             */
+            getItemReminders(itemId) {
+                return this.reminders.filter(r => r.item_id === itemId && r.is_active);
+            }
+
+            startReminderEngine() {
+                setInterval(() => {
+                    this.processReminders();
+                }, 60000); // Check every minute
+            }
+
+            processReminders() {
+                const now = new Date();
+                
+                this.reminders.forEach(reminder => {
+                    if (!reminder.is_active || reminder.is_sent) return;
+                    
+                    if (now >= new Date(reminder.reminder_date)) {
+                        this.sendReminder(reminder);
+                        reminder.is_sent = true;
+                    }
+                });
+            }
+
+            // Adapted notification delivery from customer-reminder-php
+            sendReminder(reminder) {
+                const methods = reminder.notification_methods || ['in_app'];
+                
+                methods.forEach(method => {
+                    switch (method) {
+                        case 'browser':
+                            this.sendBrowserNotification(reminder);
+                            break;
+                        case 'in_app':
+                            this.sendInAppNotification(reminder);
+                            break;
+                    }
+                });
+            }
+
+            sendBrowserNotification(reminder) {
+                if (!this.notificationPermission) return;
+                
+                const notification = new Notification('Grocery Reminder', {
+                    body: reminder.message,
+                    icon: '🛒',
+                    tag: `grocery-reminder-${reminder.id}`
+                });
+                
+                setTimeout(() => notification.close(), 10000);
+            }
+
+            sendInAppNotification(reminder) {
+                if (window.groceryApp && window.groceryApp.showToast) {
+                    const toastType = reminder.priority === 'high' ? 'error' : 
+                                    reminder.priority === 'medium' ? 'warning' : 'info';
+                    window.groceryApp.showToast(reminder.message, toastType);
+                }
+            }
+        }
+    </script>
+
+    <!-- Main Grocery App with Database Integration -->
+    <script>
+        class GroceryApp {
+            constructor() {
+                this.items = [];
+                this.currentView = 'list';
+                this.filters = { search: '', category: '', priority: '', expiry: '' };
+                this.expiryTracker = new ExpiryTracker();
+                this.reminderSystem = new ReminderSystem(this.expiryTracker);
+                this.API_BASE = 'api/';
+                this.init();
+            }
+
+            async init() {
+                console.log('Initializing GroceryApp...');
+                this.setupEventListeners();
+                await this.loadItems();
+                this.updateStats();
+                this.setDefaultDates();
+                this.setupReminderChecks();
+                
+                // Initial reminder button update
+                setTimeout(() => {
+                    this.updateReminderButtonCount();
+                }, 3000);
+                
+                console.log('GroceryApp initialized with items:', this.items.length);
+            }
+
+            setupReminderChecks() {
+                // Only check reminders when the site loads
+                setTimeout(() => {
+                    this.reminderSystem.setupExpiryReminders(this.items);
+                    this.checkPendingReminders();
+                    this.updateReminderButtonCount();
+                }, 2000);
+            }
+
+            updateReminderButtonCount() {
+                const activeReminders = this.reminderSystem.getActiveReminders();
+                const pendingReminders = this.reminderSystem.getPendingReminders();
+                const reminderButton = document.querySelector('[onclick="groceryApp.showRemindersManager();"]');
+                
+                if (reminderButton) {
+                    const count = pendingReminders.length;
+                    const activeCount = activeReminders.length;
+                    
+                    let badgeHTML = '';
+                    if (count > 0) {
+                        // Pending reminders (urgent)
+                        badgeHTML = `<span class="badge bg-danger rounded-pill reminder-badge ms-1" title="${count} pending reminders">${count}</span>`;
+                    } else if (activeCount > 0) {
+                        // Active reminders but none pending
+                        badgeHTML = `<span class="badge bg-info rounded-pill ms-1" title="${activeCount} active reminders">${activeCount}</span>`;
+                    }
+                    
+                    reminderButton.innerHTML = `<i class="fas fa-bell me-1"></i>Manage Reminders ${badgeHTML}`;
+                }
+            }
+
+            checkPendingReminders() {
+                const pendingReminders = this.reminderSystem.getPendingReminders();
+                this.updateReminderButtonCount(); // Update button count
+                
+                if (pendingReminders.length > 0) {
+                    const reminderText = `You have ${pendingReminders.length} pending reminder(s). Click "Manage Reminders" to view them.`;
+                    this.showReminder(reminderText);
+                }
+            }
+
+            showReminder(text) {
+                const reminderAlert = document.getElementById('reminderAlert');
+                const reminderText = document.getElementById('reminderText');
+                
+                reminderText.textContent = text;
+                reminderAlert.classList.remove('d-none');
+                
+                // Auto-hide after 10 seconds
+                setTimeout(() => {
+                    reminderAlert.classList.add('d-none');
+                }, 10000);
+            }
+
+            showRemindersManager() {
+                const activeReminders = this.reminderSystem.getActiveReminders();
+                
+                let content = '<div class="row mb-3">';
+                content += '<div class="col-8"><h6>Active Reminders (' + activeReminders.length + ')</h6></div>';
+                content += '<div class="col-4 text-end">';
+                content += '<button class="btn btn-sm btn-outline-primary" onclick="groceryApp.refreshReminders()" title="Refresh Reminders">';
+                content += '<i class="fas fa-sync-alt me-1"></i>Refresh</button>';
+                content += '</div></div>';
+                
+                if (activeReminders.length === 0) {
+                    content += '<div class="text-center py-4"><p class="text-muted">No active reminders</p></div>';
+                } else {
+                    content += '<div class="list-group">';
+                    activeReminders.forEach(reminder => {
+                        const reminderDate = new Date(reminder.reminder_date).toLocaleString();
+                        content += `
+                            <div class="list-group-item">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <h6 class="mb-1">${this.escapeHtml(reminder.item_name)}</h6>
+                                        <p class="mb-1">${this.escapeHtml(reminder.message)}</p>
+                                        <small class="text-muted">
+                                            <i class="fas fa-clock me-1"></i>${reminderDate}
+                                            <span class="badge bg-${reminder.priority === 'high' ? 'danger' : reminder.priority === 'medium' ? 'warning' : 'secondary'} ms-2">
+                                                ${reminder.priority}
+                                            </span>
+                                        </small>
+                                    </div>
+                                    <button class="btn btn-sm btn-outline-danger" onclick="groceryApp.deactivateReminder('${reminder.id}')">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    content += '</div>';
+                }
+                
+                document.getElementById('remindersManagerContent').innerHTML = content;
+                new bootstrap.Modal(document.getElementById('remindersManagerModal')).show();
+            }
+
+            refreshReminders() {
+                // Refresh reminders based on current items
+                this.reminderSystem.setupExpiryReminders(this.items);
+                this.checkPendingReminders();
+                this.updateReminderButtonCount();
+                this.showToast('Reminders refreshed!', 'success');
+                
+                // Refresh the modal content
+                this.showRemindersManager();
+            }
+
+            deactivateReminder(reminderId) {
+                if (this.reminderSystem.deactivateReminder(reminderId)) {
+                    this.showToast('Reminder deactivated', 'success');
+                    this.updateReminderButtonCount(); // Update button count
+                    this.showRemindersManager(); // Refresh the modal
+                }
+            }
+
+            setDefaultDates() {
+                const today = new Date().toISOString().split('T')[0];
+                document.getElementById('purchaseDate').value = today;
+                // Don't call updateExpiryCalculation here as components may not be ready
+            }
+
+            async apiRequest(endpoint, options = {}) {
+                try {
+                    const response = await fetch(this.API_BASE + endpoint, {
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        ...options
+                    });
+                    return await response.json();
+                } catch (error) {
+                    console.error('API Error:', error);
+                    throw error;
+                }
+            }
+
+            async loadItems() {
+                try {
+                    console.log('Loading items from API...');
+                    const response = await this.apiRequest('read.php');
+                    console.log('API response:', response);
+                    
+                    this.items = response.records || [];
+                    console.log('Loaded items:', this.items);
+                    
+                    // If no items from API, load sample data for testing
+                    if (this.items.length === 0) {
+                        console.log('No items from API, loading sample data...');
+                        this.loadSampleData();
+                    }
+                    
+                    this.renderItems();
+                    
+                    // Update reminders and button count after loading items
+                    if (this.reminderSystem) {
+                        this.reminderSystem.setupExpiryReminders(this.items);
+                        this.updateReminderButtonCount();
+                    }
+                } catch (error) {
+                    console.error('Error loading items:', error);
+                    console.log('API failed, loading sample data...');
+                    this.loadSampleData();
+                    this.renderItems();
+                    this.showToast('Using sample data - check API connection', 'warning');
+                }
+            }
+
+            loadSampleData() {
+                const today = new Date();
+                const tomorrow = new Date(today);
+                tomorrow.setDate(tomorrow.getDate() + 1);
+                const nextWeek = new Date(today);
+                nextWeek.setDate(nextWeek.getDate() + 7);
+                const expired = new Date(today);
+                expired.setDate(expired.getDate() - 2);
+
+                this.items = [
+                    { 
+                        id: 1, name: "Chocolate", quantity: 1, category: "pantry", 
+                        priority: "medium", estimated_price: 0.00, completed: false, 
+                        date_added: today.toISOString(), expiration_date: tomorrow.toISOString().split('T')[0],
+                        purchase_date: today.toISOString().split('T')[0], notes: "Expires in 1 day(s)"
+                    },
+                    { 
+                        id: 2, name: "Flour", quantity: 1, category: "pantry", 
+                        priority: "high", estimated_price: 3.00, completed: false, 
+                        date_added: today.toISOString(), expiration_date: nextWeek.toISOString().split('T')[0],
+                        purchase_date: today.toISOString().split('T')[0], notes: "28 days left"
+                    },
+                    { 
+                        id: 3, name: "Water", quantity: 5, category: "beverages", 
+                        priority: "high", estimated_price: 1.00, completed: false, 
+                        date_added: today.toISOString(), expiration_date: null,
+                        purchase_date: today.toISOString().split('T')[0], notes: "No expiry date"
+                    },
+                    { 
+                        id: 4, name: "Salt", quantity: 1, category: "pantry", 
+                        priority: "medium", estimated_price: 3.50, completed: false, 
+                        date_added: today.toISOString(), expiration_date: expired.toISOString().split('T')[0],
+                        purchase_date: expired.toISOString().split('T')[0], notes: "Expired item"
+                    },
+                    { 
+                        id: 5, name: "Eggs", quantity: 1, category: "dairy", 
+                        priority: "medium", estimated_price: 7.50, completed: true, 
+                        date_added: today.toISOString(), expiration_date: expired.toISOString().split('T')[0],
+                        purchase_date: expired.toISOString().split('T')[0], notes: "Completed item"
+                    },
+                    { 
+                        id: 6, name: "Milk", quantity: 1, category: "dairy", 
+                        priority: "high", estimated_price: 3.99, completed: true, 
+                        date_added: today.toISOString(), expiration_date: tomorrow.toISOString().split('T')[0],
+                        purchase_date: today.toISOString().split('T')[0], notes: "Completed item"
+                    }
+                ];
+                
+                console.log('Sample data loaded:', this.items);
+            }
+
+            setupEventListeners() {
+                document.getElementById('addItemForm').addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    this.addItem();
+                });
+
+                document.getElementById('searchItems').addEventListener('input', (e) => {
+                    this.filters.search = e.target.value;
+                    this.debounceRenderItems();
+                });
+
+                ['filterCategory', 'filterPriority', 'filterExpiry'].forEach(id => {
+                    document.getElementById(id).addEventListener('change', (e) => {
+                        this.filters[id.replace('filter', '').toLowerCase()] = e.target.value;
+                        this.renderItems();
+                    });
+                });
+
+                // Check reminders when user returns to the page
+                document.addEventListener('visibilitychange', () => {
+                    if (!document.hidden) {
+                        // Page became visible again
+                        setTimeout(() => {
+                            this.checkPendingReminders();
+                            this.updateReminderButtonCount();
+                        }, 1000);
+                    }
+                });
+
+                // Check reminders when window regains focus
+                window.addEventListener('focus', () => {
+                    setTimeout(() => {
+                        this.checkPendingReminders();
+                        this.updateReminderButtonCount();
+                    }, 500);
+                });
+            }
+
+            debounceRenderItems = this.debounce(() => this.renderItems(), 300);
+
+            debounce(func, wait) {
+                let timeout;
+                return function executedFunction(...args) {
+                    const later = () => {
+                        clearTimeout(timeout);
+                        func(...args);
+                    };
+                    clearTimeout(timeout);
+                    timeout = setTimeout(later, wait);
+                };
+            }
+
+            async addItem() {
+                // Immediate UI feedback
+                const addBtn = document.getElementById('addBtn');
+                const addCard = document.getElementById('addItemCard');
+                
+                addBtn.innerHTML = '<i class="fas fa-check"></i>';
+                addCard.classList.add('add-item-success');
+                
+                const formData = {
+                    name: document.getElementById('itemName').value.trim(),
+                    quantity: parseInt(document.getElementById('quantity').value),
+                    category: document.getElementById('category').value,
+                    priority: document.getElementById('priority').value,
+                    estimated_price: parseFloat(document.getElementById('estimatedPrice').value) || 0,
+                    notes: document.getElementById('notes').value,
+                    expiration_date: document.getElementById('expiryDate').value,
+                    purchase_date: document.getElementById('purchaseDate').value
+                };
+
+                try {
+                    // Optimistic UI update - add immediately
+                    const tempItem = {
+                        ...formData,
+                        id: Date.now(), // Temporary ID
+                        completed: false,
+                        date_added: new Date().toISOString()
+                    };
+                    this.items.unshift(tempItem);
+                    this.renderItems();
+
+                    // Save to database
+                    const response = await this.apiRequest('create.php', {
+                        method: 'POST',
+                        body: JSON.stringify(formData)
+                    });
+
+                    if (response.success) {
+                        // Update with real ID from database
+                        tempItem.id = response.id;
+                        this.updateStats();
+                        this.showToast(`${formData.name} added successfully!`, 'success');
+                        
+                        // Update reminders for the new item
+                        this.reminderSystem.setupExpiryReminders([tempItem]);
+                        this.updateReminderButtonCount();
+                    } else {
+                        throw new Error(response.message);
+                    }
+                } catch (error) {
+                    // Remove optimistic update on error
+                    this.items = this.items.filter(item => item.id !== Date.now());
+                    this.renderItems();
+                    this.showToast('Error adding item: ' + error.message, 'error');
+                }
+
+                // Reset form and button
+                setTimeout(() => {
+                    this.resetForm();
+                    addBtn.innerHTML = '<i class="fas fa-plus"></i>';
+                    addCard.classList.remove('add-item-success');
+                }, 500);
+            }
+
+            resetForm() {
+                document.getElementById('addItemForm').reset();
+                document.getElementById('quantity').value = 1;
+                document.getElementById('priority').value = 'medium';
+                this.setDefaultDates();
+            }
+
+            renderItems() {
+                const container = document.getElementById('itemsList');
+                const filteredItems = this.getFilteredItems();
+
+                if (filteredItems.length === 0) {
+                    this.renderEmptyState();
+                    return;
+                }
+
+                container.innerHTML = filteredItems.map(item => this.createItemCard(item)).join('');
+            }
+
+            getFilteredItems() {
+                let filtered = [...this.items];
+
+                if (this.filters.search) {
+                    const searchTerm = this.filters.search.toLowerCase();
+                    filtered = filtered.filter(item => 
+                        item.name.toLowerCase().includes(searchTerm) ||
+                        item.category.toLowerCase().includes(searchTerm)
+                    );
+                }
+
+                if (this.filters.category) {
+                    filtered = filtered.filter(item => item.category === this.filters.category);
+                }
+
+                if (this.filters.priority) {
+                    filtered = filtered.filter(item => item.priority === this.filters.priority);
+                }
+
+                if (this.filters.expiry) {
+                    filtered = filtered.filter(item => {
+                        const status = this.expiryTracker.getExpiryStatus(item);
+                        return status.status === this.filters.expiry || 
+                               (this.filters.expiry === 'expiring' && status.status === 'expiring_soon');
+                    });
+                }
+
+                // Sort by priority, then by expiry status
+                const priorityOrder = { 'high': 3, 'medium': 2, 'low': 1 };
+                filtered.sort((a, b) => {
+                    if (a.completed !== b.completed) {
+                        return a.completed ? 1 : -1;
+                    }
+                    
+                    const aStatus = this.expiryTracker.getExpiryStatus(a);
+                    const bStatus = this.expiryTracker.getExpiryStatus(b);
+                    
+                    // Expired items first, then expiring soon
+                    if (aStatus.status === 'expired' && bStatus.status !== 'expired') return -1;
+                    if (bStatus.status === 'expired' && aStatus.status !== 'expired') return 1;
+                    if (aStatus.status === 'expiring_soon' && bStatus.status === 'fresh') return -1;
+                    if (bStatus.status === 'expiring_soon' && aStatus.status === 'fresh') return 1;
+                    
+                    if (priorityOrder[a.priority] !== priorityOrder[b.priority]) {
+                        return priorityOrder[b.priority] - priorityOrder[a.priority];
+                    }
+                    return a.name.localeCompare(b.name);
+                });
+
+                return filtered;
+            }
+
+            createItemCard(item) {
+                const categoryClass = `category-${item.category}`;
+                const priorityClass = `priority-${item.priority}`;
+                const completedClass = item.completed ? 'completed' : '';
+                const expiryStatus = this.expiryTracker.getExpiryStatus(item);
+                
+                // Check if item has active reminders
+                const activeReminders = this.reminderSystem.getItemReminders(item.id);
+                const hasReminders = activeReminders.length > 0;
+
+                return `
+                    <div class="item-card card mb-3 fade-in ${priorityClass} ${completedClass}">
+                        <div class="card-body">
+                            <div class="row align-items-center">
+                                <div class="col-md-1">
+                                    <div class="form-check">
+                                        <input class="form-check-input completion-checkbox" type="checkbox" 
+                                               ${item.completed ? 'checked' : ''} 
+                                               onchange="groceryApp.toggleComplete(${item.id})">
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <h6 class="item-name mb-1">
+                                        ${this.escapeHtml(item.name)}
+                                        ${hasReminders ? '<i class="fas fa-bell text-info ms-2" title="Has reminders"></i>' : ''}
+                                    </h6>
+                                    <div class="d-flex gap-2 flex-wrap">
+                                        <span class="badge category-badge ${categoryClass}">${item.category}</span>
+                                        <span class="expiry-status ${expiryStatus.badgeClass}">
+                                            ${expiryStatus.icon} ${expiryStatus.message}
+                                        </span>
+                                        ${hasReminders ? `<span class="badge bg-info"><i class="fas fa-bell"></i> ${activeReminders.length} reminder(s)</span>` : ''}
+                                    </div>
+                                </div>
+                                <div class="col-md-1">
+                                    <small class="text-muted">Qty:</small>
+                                    <div class="fw-bold">${item.quantity}</div>
+                                </div>
+                                <div class="col-md-2">
+                                    <small class="text-muted">Priority:</small>
+                                    <div class="priority-indicator priority-${item.priority}">
+                                        ${item.priority.charAt(0).toUpperCase() + item.priority.slice(1)}
+                                    </div>
+                                </div>
+                                <div class="col-md-2">
+                                    <small class="text-muted">Est. Price:</small>
+                                    <div class="fw-bold text-success">$${(parseFloat(item.estimated_price) * item.quantity).toFixed(2)}</div>
+                                </div>
+                                <div class="col-md-1">
+                                    <small class="text-muted">Expiry:</small>
+                                    <div class="fw-bold" style="font-size: 0.8rem;">
+                                        ${item.expiration_date ? new Date(item.expiration_date).toLocaleDateString() : 'Not set'}
+                                    </div>
+                                </div>
+                                <div class="col-md-1">
+                                    <div class="dropdown">
+                                        <button class="btn btn-sm btn-outline-secondary" type="button" 
+                                                data-bs-toggle="dropdown">
+                                            <i class="fas fa-ellipsis-v"></i>
+                                        </button>
+                                        <ul class="dropdown-menu">
+                                            <li><a class="dropdown-item" href="#" onclick="groceryApp.editItem(${item.id})">
+                                                <i class="fas fa-edit me-2"></i>Edit
+                                            </a></li>
+                                            <li><a class="dropdown-item" href="#" onclick="groceryApp.setReminder(${item.id})">
+                                                <i class="fas fa-bell me-2"></i>Set Reminder
+                                            </a></li>
+                                            <li><a class="dropdown-item" href="#" onclick="groceryApp.duplicateItem(${item.id})">
+                                                <i class="fas fa-copy me-2"></i>Duplicate
+                                            </a></li>
+                                            <li><hr class="dropdown-divider"></li>
+                                            <li><a class="dropdown-item text-danger" href="#" onclick="groceryApp.deleteItem(${item.id})">
+                                                <i class="fas fa-trash me-2"></i>Delete
+                                            </a></li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            ${item.notes ? `<div class="mt-2"><small class="text-muted"><i class="fas fa-sticky-note me-1"></i>${this.escapeHtml(item.notes)}</small></div>` : ''}
+                            ${this.renderExpiryDetails(item)}
+                        </div>
+                    </div>
+                `;
+            }
+
+            renderExpiryDetails(item) {
+                if (!item.expiration_date && !item.purchase_date) return '';
+                
+                const purchaseDate = item.purchase_date ? new Date(item.purchase_date).toLocaleDateString() : 'Unknown';
+                
+                return `
+                    <div class="expiry-date-section mt-2">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <small class="text-muted">
+                                    <i class="fas fa-calendar-alt me-1"></i>
+                                    Purchase: ${purchaseDate}
+                                </small>
+                            </div>
+                            ${item.expiration_date ? `
+                            <div class="col-md-6">
+                                <small class="text-muted">
+                                    <i class="fas fa-clock me-1"></i>
+                                    Expires: ${new Date(item.expiration_date).toLocaleDateString()}
+                                </small>
+                            </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+            }
+
+            renderEmptyState() {
+                const container = document.getElementById('itemsList');
+                container.innerHTML = `
+                    <div class="text-center py-5">
+                        <i class="fas fa-shopping-cart fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">No items found</h5>
+                        <p class="text-muted">Add some items to your grocery list!</p>
+                    </div>
+                `;
+            }
+
+            async toggleComplete(id) {
+                try {
+                    // Optimistic UI update
+                    const item = this.items.find(item => item.id === id);
+                    if (item) {
+                        item.completed = !item.completed;
+                        item.date_completed = item.completed ? new Date().toISOString() : null;
+                        this.renderItems();
+                        this.updateStats();
+                    }
+
+                    // Save to database
+                    const response = await this.apiRequest('toggle_complete.php', {
+                        method: 'PUT',
+                        body: JSON.stringify({ id })
+                    });
+
+                    if (response.success && item) {
+                        if (item.completed) {
+                            this.showToast(`${item.name} marked as completed!`, 'success');
+                        }
+                    } else {
+                        throw new Error(response.message);
+                    }
+                } catch (error) {
+                    // Revert optimistic update
+                    const item = this.items.find(item => item.id === id);
+                    if (item) {
+                        item.completed = !item.completed;
+                        this.renderItems();
+                    }
+                    this.showToast('Error updating item: ' + error.message, 'error');
+                }
+            }
+
+            async editItem(id) {
+                try {
+                    const response = await this.apiRequest(`read_single.php?id=${id}`);
+                    const item = response;
+                    
+                    if (item) {
+                        document.getElementById('editItemId').value = item.id;
+                        document.getElementById('editItemName').value = item.name;
+                        document.getElementById('editQuantity').value = item.quantity;
+                        document.getElementById('editCategory').value = item.category;
+                        document.getElementById('editPriority').value = item.priority;
+                        document.getElementById('editEstimatedPrice').value = item.estimated_price;
+                        document.getElementById('editNotes').value = item.notes || '';
+                        document.getElementById('editExpiryDate').value = item.expiration_date || '';
+                        document.getElementById('editPurchaseDate').value = item.purchase_date || '';
+                        
+                        new bootstrap.Modal(document.getElementById('editModal')).show();
+                    }
+                } catch (error) {
+                    this.showToast('Error loading item: ' + error.message, 'error');
+                }
+            }
+
+            async updateItem() {
+                const itemData = {
+                    id: parseInt(document.getElementById('editItemId').value),
+                    name: document.getElementById('editItemName').value.trim(),
+                    quantity: parseInt(document.getElementById('editQuantity').value),
+                    category: document.getElementById('editCategory').value,
+                    priority: document.getElementById('editPriority').value,
+                    estimated_price: parseFloat(document.getElementById('editEstimatedPrice').value) || 0,
+                    notes: document.getElementById('editNotes').value,
+                    expiration_date: document.getElementById('editExpiryDate').value,
+                    purchase_date: document.getElementById('editPurchaseDate').value
+                };
+
+                try {
+                    const response = await this.apiRequest('update.php', {
+                        method: 'PUT',
+                        body: JSON.stringify(itemData)
+                    });
+                    
+                    if (response.success) {
+                        bootstrap.Modal.getInstance(document.getElementById('editModal')).hide();
+                        this.showToast('Item updated successfully!', 'success');
+                        await this.loadItems();
+                        this.updateStats();
+                    } else {
+                        throw new Error(response.message);
+                    }
+                } catch (error) {
+                    this.showToast('Error updating item: ' + error.message, 'error');
+                }
+            }
+
+            async deleteItem(id) {
+                const item = this.items.find(item => item.id === id);
+                if (!item) return;
+
+                if (confirm(`Are you sure you want to delete "${item.name}"?`)) {
+                    try {
+                        const response = await this.apiRequest('delete.php', {
+                            method: 'DELETE',
+                            body: JSON.stringify({ id })
+                        });
+                        
+                        if (response.success) {
+                            this.showToast('Item deleted successfully!', 'success');
+                            
+                            // Deactivate reminders for deleted item
+                            this.reminderSystem.deactivateItemReminders(id);
+                            this.updateReminderButtonCount();
+                            
+                            await this.loadItems();
+                            this.updateStats();
+                        } else {
+                            throw new Error(response.message);
+                        }
+                    } catch (error) {
+                        this.showToast('Error deleting item: ' + error.message, 'error');
+                    }
+                }
+            }
+
+            async setReminder(id) {
+                const item = this.items.find(item => item.id === id);
+                if (item) {
+                    document.getElementById('reminderItemId').value = item.id;
+                    document.getElementById('reminderItemDisplay').value = item.name;
+                    
+                    // Set default reminder date to tomorrow
+                    const tomorrow = new Date();
+                    tomorrow.setDate(tomorrow.getDate() + 1);
+                    tomorrow.setHours(9, 0, 0, 0); // 9 AM tomorrow
+                    document.getElementById('reminderDate').value = tomorrow.toISOString().slice(0, 16);
+                    
+                    // Clear previous form data
+                    document.getElementById('reminderMessage').value = '';
+                    document.getElementById('reminderPriority').value = 'medium';
+                    document.getElementById('reminderType').value = 'purchase_reminder';
+                    
+                    new bootstrap.Modal(document.getElementById('reminderModal')).show();
+                }
+            }
+
+            createCustomReminder() {
+                const itemId = parseInt(document.getElementById('reminderItemId').value);
+                const item = this.items.find(item => item.id === itemId);
+                const reminderType = document.getElementById('reminderType').value;
+                const reminderDate = new Date(document.getElementById('reminderDate').value);
+                const customMessage = document.getElementById('reminderMessage').value.trim();
+                const priority = document.getElementById('reminderPriority').value;
+                
+                // Get notification methods
+                const notificationMethods = [];
+                if (document.getElementById('notifyBrowser').checked) {
+                    notificationMethods.push('browser');
+                }
+                if (document.getElementById('notifyInApp').checked) {
+                    notificationMethods.push('in_app');
+                }
+                
+                // Generate message if custom message not provided
+                const message = customMessage || this.reminderSystem.generateReminderMessage(item, reminderType);
+                
+                // Create the reminder
+                const reminder = this.reminderSystem.createReminder(
+                    item, 
+                    reminderType, 
+                    reminderDate,
+                    {
+                        priority: priority,
+                        notification_methods: notificationMethods,
+                        custom_message: customMessage
+                    }
+                );
+                
+                if (reminder) {
+                    this.showToast(`Reminder set for ${item.name} on ${reminderDate.toLocaleDateString()}`, 'success');
+                    bootstrap.Modal.getInstance(document.getElementById('reminderModal')).hide();
+                    this.updateReminderButtonCount(); // Update button count
+                    
+                    // Show confirmation with reminder details
+                    setTimeout(() => {
+                        this.showReminder(`📝 Reminder Created: ${message}`);
+                    }, 1000);
+                } else {
+                    this.showToast('Failed to create reminder', 'error');
+                }
+            }
+
+            async duplicateItem(id) {
+                const item = this.items.find(item => item.id === id);
+                if (item) {
+                    const newItemData = {
+                        name: item.name + ' (Copy)',
+                        quantity: item.quantity,
+                        category: item.category,
+                        priority: item.priority,
+                        estimated_price: item.estimated_price,
+                        notes: item.notes,
+                        expiration_date: item.expiration_date,
+                        purchase_date: item.purchase_date
+                    };
+                    
+                    try {
+                        const response = await this.apiRequest('create.php', {
+                            method: 'POST',
+                            body: JSON.stringify(newItemData)
+                        });
+                        
+                        if (response.success) {
+                            this.showToast('Item duplicated successfully!', 'success');
+                            await this.loadItems();
+                            this.updateStats();
+                        } else {
+                            throw new Error(response.message);
+                        }
+                    } catch (error) {
+                        this.showToast('Error duplicating item: ' + error.message, 'error');
+                    }
+                }
+            }
+
+            async clearCompleted() {
+                const completedCount = this.items.filter(item => item.completed).length;
+                
+                if (completedCount === 0) {
+                    this.showToast('No completed items to clear!', 'info');
+                    return;
+                }
+
+                if (confirm(`Are you sure you want to delete ${completedCount} completed item(s)?`)) {
+                    try {
+                        const response = await this.apiRequest('clear_completed.php', {
+                            method: 'DELETE'
+                        });
+                        
+                        if (response.success) {
+                            this.showToast(`${completedCount} completed items cleared!`, 'success');
+                            await this.loadItems();
+                            this.updateStats();
+                        } else {
+                            throw new Error(response.message);
+                        }
+                    } catch (error) {
+                        this.showToast('Error clearing items: ' + error.message, 'error');
+                    }
+                }
+            }
+
+            toggleView() {
+                this.currentView = this.currentView === 'list' ? 'grid' : 'list';
+                const icon = document.getElementById('viewToggleIcon');
+                icon.className = this.currentView === 'list' ? 'fas fa-th-list' : 'fas fa-th';
+                this.renderItems();
+            }
+
+            async updateStats() {
+                try {
+                    const response = await this.apiRequest('stats.php');
+                    
+                    if (response.success && response.data) {
+                        const stats = response.data;
+                        document.getElementById('totalItems').textContent = stats.total_items || 0;
+                        document.getElementById('completedItems').textContent = stats.completed_items || 0;
+                        document.getElementById('pendingItems').textContent = stats.pending_items || 0;
+                        document.getElementById('totalEstimated').textContent = `$${parseFloat(stats.total_estimated || 0).toFixed(2)}`;
+                    } else {
+                        // Fallback to local calculation
+                        const total = this.items.length;
+                        const completed = this.items.filter(item => item.completed).length;
+                        const pending = total - completed;
+                        const totalEstimated = this.items.reduce((sum, item) => sum + (parseFloat(item.estimated_price) * item.quantity), 0);
+                        
+                        document.getElementById('totalItems').textContent = total;
+                        document.getElementById('completedItems').textContent = completed;
+                        document.getElementById('pendingItems').textContent = pending;
+                        document.getElementById('totalEstimated').textContent = `$${totalEstimated.toFixed(2)}`;
+                    }
+
+                    // Calculate expiry stats from all items (including completed ones for consistency)
+                    const report = this.expiryTracker.generateExpiryReport(this.items);
+                    
+                    // For the stats modal, we want to show expiry status for ALL items
+                    // So we need to also check completed items for expiry
+                    let allExpired = report.expired_count;
+                    let allExpiringSoon = report.expiring_soon_count;
+                    
+                    // Check completed items for their expiry status too
+                    if (report.completed && report.completed.length > 0) {
+                        report.completed.forEach(item => {
+                            if (item.expiration_date) {
+                                const days = this.expiryTracker.calculateDaysUntilExpiry(item.expiration_date);
+                                if (days < 0) {
+                                    allExpired++;
+                                } else if (days <= this.expiryTracker.expiryThreshold) {
+                                    allExpiringSoon++;
+                                }
+                            }
+                        });
+                    }
+                    
+                    document.getElementById('expiredCount').textContent = allExpired;
+                    document.getElementById('expiringSoonCount').textContent = allExpiringSoon;
+                } catch (error) {
+                    console.error('Error updating stats:', error);
+                }
+            }
+
+            showExpiryReport() {
+                console.log('Generating expiry report for items:', this.items);
+                const report = this.expiryTracker.generateExpiryReport(this.items);
+                console.log('Generated report:', report);
+                this.displayExpiryModal(report);
+            }
+
+            displayExpiryModal(report) {
+                console.log('Displaying modal for report:', report);
+                
+                const modalContent = `
+                    <div class="row mb-3">
+                        <div class="col-md-2">
+                            <div class="card text-center border-danger">
+                                <div class="card-body">
+                                    <h3 class="text-danger">${report.expired_count}</h3>
+                                    <small>Expired Items</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="card text-center border-warning">
+                                <div class="card-body">
+                                    <h3 class="text-warning">${report.expiring_soon_count}</h3>
+                                    <small>Expiring Soon</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="card text-center border-success">
+                                <div class="card-body">
+                                    <h3 class="text-success">${report.fresh_count}</h3>
+                                    <small>Fresh Items</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="card text-center border-secondary">
+                                <div class="card-body">
+                                    <h3 class="text-secondary">${report.completed_count}</h3>
+                                    <small>Completed</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="card text-center border-primary">
+                                <div class="card-body">
+                                    <h3 class="text-primary">${report.active_items}</h3>
+                                    <small>Active Items</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="card text-center border-info">
+                                <div class="card-body">
+                                    <h3 class="text-info">${report.total_items}</h3>
+                                    <small>Total Items</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    ${report.expired_count > 0 ? this.renderExpirySection('Expired Items', report.expired, 'danger') : ''}
+                    ${report.expiring_soon_count > 0 ? this.renderExpirySection('Expiring Soon', report.expiring_soon, 'warning') : ''}
+                    ${report.fresh_count > 0 ? this.renderExpirySection('Fresh Items', report.fresh, 'success') : ''}
+                    ${report.no_date_count > 0 ? this.renderExpirySection('No Expiry Date Set', report.no_date, 'info') : ''}
+                    ${report.completed_count > 0 ? this.renderExpirySection('Completed Items', report.completed, 'secondary') : ''}
+                    
+                    ${report.active_items === 0 ? '<div class="text-center py-4"><h5>No active items to display</h5><p class="text-muted">Add some items to your grocery list to see the expiry report.</p></div>' : ''}
+                `;
+
+                document.getElementById('expiryReportContent').innerHTML = modalContent;
+                new bootstrap.Modal(document.getElementById('expiryModal')).show();
+            }
+
+            renderExpirySection(title, items, alertClass) {
+    if (!items || items.length === 0) return '';
+    
+    return `
+        <div class="mb-4">
+            <h5 class="text-${alertClass}">${title}</h5>
+            <div class="list-group">
+                ${items.map(item => {
+                    let status, expiryDisplay, badgeClass;
+                    
+                    if (alertClass === 'secondary') {
+                        // For completed items, show both completion AND expiry status
+                        const expiryStatus = this.expiryTracker.getExpiryStatus(item);
+                        status = { 
+                            message: `Completed • ${expiryStatus.message}` 
+                        };
+                        // Set badge class based on expiry status for completed items
+                        if (expiryStatus.status === 'expired') {
+                            badgeClass = 'danger';
+                        } else if (expiryStatus.status === 'expiring_soon') {
+                            badgeClass = 'warning';
+                        } else {
+                            badgeClass = 'secondary';
+                        }
+                        expiryDisplay = item.expiration_date ? 
+                            new Date(item.expiration_date).toLocaleDateString() : 
+                            'No date set';
+                    } else {
+                        // For active items, show expiry status
+                        status = this.expiryTracker.getExpiryStatus(item);
+                        badgeClass = alertClass;
+                        expiryDisplay = item.expiration_date ? 
+                            new Date(item.expiration_date).toLocaleDateString() : 
+                            'No date set';
+                    }
+                        
+                    return `
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>${this.escapeHtml(item.name)}</strong>
+                                ${item.completed ? '<span class="badge bg-success ms-2">✓ Completed</span>' : ''}
+                                <br>
+                                <small class="text-muted">${item.category} • Expires: ${expiryDisplay}</small>
+                                ${item.notes ? `<br><small class="text-muted">Notes: ${this.escapeHtml(item.notes)}</small>` : ''}
+                            </div>
+                            <span class="badge bg-${badgeClass}">${status.message}</span>
+                        </div>
+                    `;
+                }).join('')}
+            </div>
+        </div>
+    `;
+}
+
+async clearExpiredItems() {
+    const report = this.expiryTracker.generateExpiryReport(this.items);
+    
+    // Get all expired items (both active and completed)
+    const allExpiredItems = [...report.expired];
+    
+    // Add completed items that are also expired
+    if (report.completed && report.completed.length > 0) {
+        report.completed.forEach(item => {
+            if (item.expiration_date) {
+                const days = this.expiryTracker.calculateDaysUntilExpiry(item.expiration_date);
+                if (days < 0) {
+                    allExpiredItems.push(item);
+                }
+            }
+        });
+    }
+
+    if (allExpiredItems.length === 0) {
+        this.showToast('No expired items to remove!', 'info');
+        return;
+    }
+
+    const activeExpired = report.expired.length;
+    const completedExpired = allExpiredItems.length - activeExpired;
+    
+    let confirmMessage = `Are you sure you want to remove ${allExpiredItems.length} expired item(s)?`;
+    if (activeExpired > 0 && completedExpired > 0) {
+        confirmMessage += `\n(${activeExpired} active, ${completedExpired} completed)`;
+    } else if (completedExpired > 0) {
+        confirmMessage += `\n(All are completed items)`;
+    }
+
+    if (confirm(confirmMessage)) {
+        try {
+            // Delete each expired item
+            for (const item of allExpiredItems) {
+                await this.apiRequest('delete.php', {
+                    method: 'DELETE',
+                    body: JSON.stringify({ id: item.id })
+                });
+                
+                // Also deactivate any reminders for this item
+                this.reminderSystem.deactivateItemReminders(item.id);
+            }
+            
+            this.showToast(`${allExpiredItems.length} expired items removed!`, 'success');
+            await this.loadItems();
+            this.updateStats();
+            this.updateReminderButtonCount();
+            bootstrap.Modal.getInstance(document.getElementById('expiryModal')).hide();
+        } catch (error) {
+            this.showToast('Error removing expired items: ' + error.message, 'error');
+        }
+    }
+}
+
+async clearActiveExpiredItems() {
+    const report = this.expiryTracker.generateExpiryReport(this.items);
+    const expiredItems = report.expired;
+
+    if (expiredItems.length === 0) {
+        this.showToast('No active expired items to remove!', 'info');
+        return;
+    }
+
+    if (confirm(`Are you sure you want to remove ${expiredItems.length} active expired item(s)?`)) {
+        await this.deleteExpiredItems(expiredItems);
+    }
+}
+
+async clearCompletedExpiredItems() {
+    const report = this.expiryTracker.generateExpiryReport(this.items);
+    const completedExpiredItems = [];
+    
+    if (report.completed && report.completed.length > 0) {
+        report.completed.forEach(item => {
+            if (item.expiration_date) {
+                const days = this.expiryTracker.calculateDaysUntilExpiry(item.expiration_date);
+                if (days < 0) {
+                    completedExpiredItems.push(item);
+                }
+            }
+        });
+    }
+
+    if (completedExpiredItems.length === 0) {
+        this.showToast('No completed expired items to remove!', 'info');
+        return;
+    }
+
+    if (confirm(`Are you sure you want to remove ${completedExpiredItems.length} completed expired item(s)?`)) {
+        await this.deleteExpiredItems(completedExpiredItems);
+    }
+}
+
+async clearAllExpiredItems() {
+    const report = this.expiryTracker.generateExpiryReport(this.items);
+    const allExpiredItems = [...report.expired];
+    
+    // Add completed expired items
+    if (report.completed && report.completed.length > 0) {
+        report.completed.forEach(item => {
+            if (item.expiration_date) {
+                const days = this.expiryTracker.calculateDaysUntilExpiry(item.expiration_date);
+                if (days < 0) {
+                    allExpiredItems.push(item);
+                }
+            }
+        });
+    }
+
+    if (allExpiredItems.length === 0) {
+        this.showToast('No expired items to remove!', 'info');
+        return;
+    }
+
+    const activeCount = report.expired.length;
+    const completedCount = allExpiredItems.length - activeCount;
+    
+    let message = `Are you sure you want to remove ${allExpiredItems.length} expired item(s)?`;
+    if (activeCount > 0 && completedCount > 0) {
+        message += `\n(${activeCount} active, ${completedCount} completed)`;
+    }
+
+    if (confirm(message)) {
+        await this.deleteExpiredItems(allExpiredItems);
+    }
+}
+
+// Helper function to delete expired items
+async deleteExpiredItems(items) {
+    try {
+        for (const item of items) {
+            await this.apiRequest('delete.php', {
+                method: 'DELETE',
+                body: JSON.stringify({ id: item.id })
+            });
+            
+            // Deactivate reminders for deleted items
+            this.reminderSystem.deactivateItemReminders(item.id);
+        }
+        
+        this.showToast(`${items.length} expired items removed!`, 'success');
+        await this.loadItems();
+        this.updateStats();
+        this.updateReminderButtonCount();
+        bootstrap.Modal.getInstance(document.getElementById('expiryModal')).hide();
+    } catch (error) {
+        this.showToast('Error removing expired items: ' + error.message, 'error');
+    }
+}
+
+            showToast(message, type = 'info') {
+                const toastContainer = document.getElementById('toastContainer') || this.createToastContainer();
+                const toast = document.createElement('div');
+                toast.className = `toast align-items-center text-white bg-${type === 'success' ? 'success' : type === 'error' ? 'danger' : type === 'warning' ? 'warning' : 'info'} border-0`;
+                toast.setAttribute('role', 'alert');
+                toast.innerHTML = `
+                    <div class="d-flex">
+                        <div class="toast-body">${this.escapeHtml(message)}</div>
+                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                    </div>
+                `;
+                
+                toastContainer.appendChild(toast);
+                const bsToast = new bootstrap.Toast(toast);
+                bsToast.show();
+                
+                toast.addEventListener('hidden.bs.toast', () => toast.remove());
+            }
+
+            createToastContainer() {
+                const container = document.createElement('div');
+                container.id = 'toastContainer';
+                container.className = 'toast-container position-fixed bottom-0 end-0 p-3';
+                container.style.zIndex = '1050';
+                document.body.appendChild(container);
+                return container;
+            }
+
+            escapeHtml(text) {
+                const map = {
+                    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;'
+                };
+                return String(text).replace(/[&<>"']/g, (m) => map[m]);
+            }
+        }
+
+        // Global variables
+        let groceryApp;
+
+        // Expiry calculation functions
+        function updateExpiryCalculation() {
+            if (!groceryApp || !groceryApp.expiryTracker) return;
+            
+            const category = document.getElementById('category').value;
+            const purchaseDate = document.getElementById('purchaseDate').value;
+            const expiryDate = document.getElementById('expiryDate').value;
+            
+            if (category && purchaseDate && !expiryDate) {
+                const shelfLife = groceryApp.expiryTracker.getShelfLife(category);
+                const calculatedExpiry = groceryApp.expiryTracker.calculateExpirationDate(purchaseDate, shelfLife);
+                document.getElementById('expiryDate').value = calculatedExpiry.toISOString().split('T')[0];
+                
+                document.getElementById('autoCalcHint').textContent = 
+                    `Auto-calculated: ${shelfLife} days from purchase (${category} default)`;
+            } else if (expiryDate) {
+                document.getElementById('autoCalcHint').textContent = 'Custom expiry date set';
+            } else {
+                document.getElementById('autoCalcHint').textContent = 'Auto-calculated based on category';
+            }
+        }
+
+        // Initialize the app when DOM is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            groceryApp = new GroceryApp();
+        });
+
+// Global functions for onclick handlers
+function toggleView() {
+    groceryApp.toggleView();
+}
+
+function clearCompleted() {
+    groceryApp.clearCompleted();
+}
+
+function updateItem() {
+    groceryApp.updateItem();
+}
+
+function clearExpiredItems() {
+    groceryApp.clearExpiredItems();
+}
+
+function showExpiryReport() {
+    groceryApp.showExpiryReport();
+}
+
+function createReminder() {
+    groceryApp.createCustomReminder();
+}
+
+// ADD THESE NEW FUNCTIONS:
+function clearActiveExpiredItems() {
+    groceryApp.clearActiveExpiredItems();
+}
+
+function clearCompletedExpiredItems() {
+    groceryApp.clearCompletedExpiredItems();
+}
+
+function clearAllExpiredItems() {
+    groceryApp.clearAllExpiredItems();
+}
+    </script>
+</body>
+</html>
